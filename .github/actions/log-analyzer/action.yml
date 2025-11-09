@@ -18,7 +18,8 @@ runs:
     - name: Find and Combine Logs
       shell: powershell
       run: |
-        Write-Host "📄 Searching for logs matching pattern: ${{ inputs.logs_pattern }}"
+        Set-ExecutionPolicy -ExecutionPolicy Bypass -Scope Process -Force
+        Write-Host "Searching for logs matching pattern: ${{ inputs.logs_pattern }}"
         New-Item -ItemType Directory -Force -Path combined_logs | Out-Null
         $logFiles = Get-ChildItem -Recurse -Filter "${{ inputs.logs_pattern }}"
         if ($logFiles.Count -eq 0) {
@@ -31,9 +32,10 @@ runs:
           Write-Host "Combined log saved to combined_logs/full_pipeline.log"
         }
 
-    - name: 🧠 Run Local LLM Analyzer
+    - name: Run Local LLM Analyzer
       shell: powershell
       run: |
+        Set-ExecutionPolicy -ExecutionPolicy Bypass -Scope Process -Force
         Write-Host "Running local LLM analyzer..."
         python "${{ inputs.llm_script_path }}" combined_logs/full_pipeline.log > combined_logs/llm_output.json
         Write-Host "LLM Analysis Result:"
