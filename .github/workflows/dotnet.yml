@@ -31,7 +31,7 @@ jobs:
 
     - name: Analyze Pipeline Logs
       if: always()
-      uses: ./github/actions/log-analyzer
+      uses: ./.github/actions/log-analyzer
 
     - name: Upload artifact
       uses: actions/upload-artifact@v4
