@@ -1,0 +1,32 @@
+name: "LLM Log Analyzer"
+description: "Analyzes pipeline logs using a locally hosted LLM model"
+author: "Rahul G S"
+
+inputs:
+  llm_script_path:
+    description: "Path to the Python script for log analysis"
+    required: false
+    default: "C:/rahul/llm/llm-test.py"
+  logs_pattern:
+    description: "Glob pattern for logs to include"
+    required: false
+    default: "*.log"
+
+runs:
+  using: "composite"
+  steps:
+    - name: Find and Combine Logs
+      shell: bash
+      run: |
+        echo "Searching for logs matching pattern: ${{ inputs.logs_pattern }}"
+        mkdir -p combined_logs
+        find . -type f -name "${{ inputs.logs_pattern }}" -print -exec cat {} \; > combined_logs/full_pipeline.log
+        echo "Combined log saved to combined_logs/full_pipeline.log"
+
+    - name: Run Local LLM Analyzer
+      shell: bash
+      run: |
+        echo "Analyzing combined log with local LLM..."
+        python "${{ inputs.llm_script_path }}" combined_logs/full_pipeline.log > combined_logs/llm_output.json
+        echo "LLM Analysis Result:"
+        cat combined_logs/llm_output.json
