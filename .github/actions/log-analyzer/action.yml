@@ -16,17 +16,20 @@ runs:
   using: "composite"
   steps:
     - name: Combine Logs
-      shell: powershell
+      shell: pwsh
       run: |
         Write-Host "Searching for logs matching pattern: ${{ inputs.logs_pattern }}"
-        $logs = Get-ChildItem -Path . -Filter "${{ inputs.logs_pattern }}" -Recurse
+        $logs = Get-ChildItem -Path $PWD -Filter "${{ inputs.logs_pattern }}" -Recurse -ErrorAction SilentlyContinue
         if ($logs.Count -eq 0) {
           Write-Host "No log files found."
+          exit 0
         } else {
-          New-Item -ItemType Directory -Force -Path combined_logs | Out-Null
-          Get-Content $logs.FullName | Out-File -FilePath combined_logs/full_pipeline.log -Encoding utf8
+          $combinedDir = Join-Path $PWD "combined_logs"
+          New-Item -ItemType Directory -Force -Path $combinedDir | Out-Null
+          $logs | ForEach-Object { Get-Content $_.FullName } | Out-File -FilePath (Join-Path $combinedDir "full_pipeline.log") -Encoding utf8
           Write-Host "Combined log saved to combined_logs/full_pipeline.log"
         }
+
 
     - name: Run Local LLM Analyzer
       shell: powershell
