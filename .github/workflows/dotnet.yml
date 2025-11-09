@@ -15,14 +15,14 @@ jobs:
     - name: Checkout repository
       uses: actions/checkout@v4
 
-    - name: Install .NET (User Scope)
+    - name: Setup .NET manually (fallback)
       shell: pwsh
       run: |
         try {
           $dotnetRoot = "$env:USERPROFILE\.dotnet"
           New-Item -ItemType Directory -Force -Path $dotnetRoot | Out-Null
           Invoke-WebRequest https://dot.net/v1/dotnet-install.ps1 -OutFile dotnet-install.ps1
-          pwsh ./dotnet-install.ps1 -Channel 6.0 -InstallDir $dotnetRoot *>&1 | Tee-Object -FilePath dotnet_setup.log
+          powershell -ExecutionPolicy Bypass -File ./dotnet-install.ps1 -Channel 6.0 -InstallDir $dotnetRoot *>&1 | Tee-Object -FilePath dotnet_setup.log
         } catch {
           $_ | Out-File -FilePath dotnet_setup.log -Append
         }
