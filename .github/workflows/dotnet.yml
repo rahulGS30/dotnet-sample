@@ -19,23 +19,27 @@ jobs:
       uses: actions/setup-dotnet@v4
       with:
         dotnet-version: 6.0.x
+        install-dir: "C:\\hostedtoolcache\\windows"
 
+    # ===== Log Capturing Steps =====
     - name: Restore
       run: dotnet restore > restore.log 2>&1
-    
+
     - name: Build
       run: dotnet build --configuration Release > build.log 2>&1
-    
+
     - name: Publish
       run: dotnet publish --configuration Release -o output > publish.log 2>&1
 
-
+    # ===== LLM Log Analyzer =====
     - name: Analyze Pipeline Logs
-      if: always()
+      if: always()  # ensures this runs even if previous steps fail
       uses: ./.github/actions/log-analyzer
 
+    # ===== Upload Artifacts =====
     - name: Upload artifact
+      if: success()  # only upload if build succeeded
       uses: actions/upload-artifact@v4
       with:
         name: dotnet-webapi-artifacts
-        path: ./publish
+        path: ./output
