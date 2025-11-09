@@ -16,17 +16,25 @@ runs:
   using: "composite"
   steps:
     - name: Find and Combine Logs
-      shell: bash
+      shell: powershell
       run: |
-        echo "Searching for logs matching pattern: ${{ inputs.logs_pattern }}"
-        mkdir -p combined_logs
-        find . -type f -name "${{ inputs.logs_pattern }}" -print -exec cat {} \; > combined_logs/full_pipeline.log
-        echo "Combined log saved to combined_logs/full_pipeline.log"
+        Write-Host "📄 Searching for logs matching pattern: ${{ inputs.logs_pattern }}"
+        New-Item -ItemType Directory -Force -Path combined_logs | Out-Null
+        $logFiles = Get-ChildItem -Recurse -Filter "${{ inputs.logs_pattern }}"
+        if ($logFiles.Count -eq 0) {
+          Write-Host "No log files found."
+        } else {
+          $logFiles | ForEach-Object {
+            Write-Host "Adding log: $($_.FullName)"
+            Get-Content $_.FullName | Add-Content combined_logs/full_pipeline.log
+          }
+          Write-Host "Combined log saved to combined_logs/full_pipeline.log"
+        }
 
-    - name: Run Local LLM Analyzer
-      shell: bash
+    - name: 🧠 Run Local LLM Analyzer
+      shell: powershell
       run: |
-        echo "Analyzing combined log with local LLM..."
+        Write-Host "Running local LLM analyzer..."
         python "${{ inputs.llm_script_path }}" combined_logs/full_pipeline.log > combined_logs/llm_output.json
-        echo "LLM Analysis Result:"
-        cat combined_logs/llm_output.json
+        Write-Host "LLM Analysis Result:"
+        Get-Content combined_logs/llm_output.json
