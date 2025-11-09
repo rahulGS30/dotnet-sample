@@ -15,13 +15,18 @@ jobs:
     - name: Checkout repository
       uses: actions/checkout@v4
 
-    - name: Setup .NET
-      uses: actions/setup-dotnet@v4
-      with:
-        dotnet-version: 6.0.x
-        install-dir: "C:\\hostedtoolcache\\windows"
+    - name: Install .NET (User Scope)
+      shell: pwsh
+      run: |
+        try {
+          $dotnetRoot = "$env:USERPROFILE\.dotnet"
+          New-Item -ItemType Directory -Force -Path $dotnetRoot | Out-Null
+          Invoke-WebRequest https://dot.net/v1/dotnet-install.ps1 -OutFile dotnet-install.ps1
+          pwsh ./dotnet-install.ps1 -Channel 6.0 -InstallDir $dotnetRoot *>&1 | Tee-Object -FilePath dotnet_setup.log
+        } catch {
+          $_ | Out-File -FilePath dotnet_setup.log -Append
+        }
 
-    # ===== Log Capturing Steps =====
     - name: Restore
       run: dotnet restore > restore.log 2>&1
 
@@ -31,14 +36,12 @@ jobs:
     - name: Publish
       run: dotnet publish --configuration Release -o output > publish.log 2>&1
 
-    # ===== LLM Log Analyzer =====
     - name: Analyze Pipeline Logs
-      if: always()  # ensures this runs even if previous steps fail
+      if: always()
       uses: ./.github/actions/log-analyzer
 
-    # ===== Upload Artifacts =====
     - name: Upload artifact
-      if: success()  # only upload if build succeeded
+      if: success()
       uses: actions/upload-artifact@v4
       with:
         name: dotnet-webapi-artifacts
