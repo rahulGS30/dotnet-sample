@@ -1,14 +1,15 @@
 name: .NET 6 CI/CD Pipeline
 
 on:
+  workflow_dispatch:
   push:
-    branches: [ "main" ]
+    branches: [ "master" ]
   pull_request:
-    branches: [ "main" ]
+    branches: [ "master" ]
 
 jobs:
   build:
-    runs-on: ubuntu-latest
+    runs-on: runner1
 
     steps:
     - name: Checkout repository
@@ -19,17 +20,18 @@ jobs:
       with:
         dotnet-version: 6.0.x
 
-    - name: Restore dependencies
-      run: dotnet restore
+    - name: dotnet restore
+      run: dotnet restore > restore.log 2>&1
 
-    - name: Build
-      run: dotnet build --no-restore --configuration Release
+    - name: dotnet build
+      run: dotnet build > build.log 2>&1
+    
+    - name: dotnet publish
+      run: dotnet publish > publish.log 2>&1
 
-    - name: Test
-      run: dotnet test --no-build --verbosity normal
-
-    - name: Publish
-      run: dotnet publish -c Release -o ./publish
+    - name: Analyze Pipeline Logs
+      if: always()
+      uses: ./github/actions/log-analyzer
 
     - name: Upload artifact
       uses: actions/upload-artifact@v4
